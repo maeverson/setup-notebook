@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Rodar no notebook NOVO (Ubuntu 25 limpo). Instala git + ansible e executa o playbook localmente.
 set -euo pipefail
-REPO_URL="${REPO_URL:-}"   # ex.: git@gitlab.com:usuario/notebook-provision.git (vazio se já clonou)
+REPO_URL="${REPO_URL:-https://github.com/maeverson/setup-notebook}"   # ex.: git@gitlab.com:usuario/notebook-provision.git (vazio se já clonou)
 DEST="${DEST:-$HOME/notebook-provision}"
 
 sudo apt update
