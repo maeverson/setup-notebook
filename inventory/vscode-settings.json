@@ -1,0 +1,143 @@
+{
+     //Cores do terminal 
+     "workbench.colorCustomizations": {
+      "terminal.foreground": "#00FD61",
+      "terminal.background": "#000000"
+    },
+  
+    // Configura tamanho e família da fonte
+    "editor.fontSize":16,
+    "editor.lineHeight":24,
+    "editor.fontFamily":"Fira Code",
+    "editor.fontLigatures":true,
+    //PRETTIER 
+    // Set the default
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.trailingComma": "none",
+  
+    // Aplica linhas verticais para lembrar de quebrar linha em códigos muito grandes
+    "editor.rulers": [
+      120,
+      180
+    ],
+  
+    // Aplica um sinal visual na esquerda da linha selecionada
+    "editor.renderLineHighlight":"gutter",
+  
+    // Aumenta a fonte do terminal
+    "terminal.integrated.fontSize":14,
+  
+    // Define o tema dos ícones na sidebar
+    "workbench.iconTheme": "fira-code-material-icon-theme",
+    // "terminal.integrated.shell.windows": "C:\\Windows\\System32\\wsl.exe"
+    "workbench.tree.indent": 15,
+    "security.workspace.trust.untrustedFiles": "open",
+    "git.openRepositoryInParentFolders": "always",
+    "files.autoSave": "onFocusChange",
+    "java.saveActions.organizeImports": true,
+    "[html]": {
+      "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "redhat.telemetry.enabled": true,
+    "veracode.Auto-Scan on Save": false,
+    "git.autofetch": true,
+    "workbench.startupEditor": "none",
+    "veracode-scan.SCA Vulnerability.sevFilters": [],
+    "veracode-scan.SCA Vulnerability.usageFilters": [],
+    "veracode-scan.SAST Flaw.sevFilters": [],
+    "veracode-scan.SCA Features.policy": false,
+    "[java]": {
+      "editor.defaultFormatter": "redhat.java"
+    },
+    "explorer.confirmDelete": false,
+    "application.shellEnvironmentResolutionTimeout": 100,
+    "git.confirmSync": false,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "explorer.confirmDragAndDrop": false,
+    "editor.inlineSuggest.suppressSuggestions": true,
+    "cody.suggestions.mode": "auto-edit",
+    "terminal.integrated.enableMultiLinePasteWarning": "never",
+    "git.suggestSmartCommit": false,
+    "continue.showInlineTip": false,
+    "terminal.integrated.inheritEnv": false,
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "workbench.colorTheme": "Dracula Theme",
+    "geminicodeassist.project": "sys-76421480184917402460494582",
+    "gitlens.ai.model": "vscode",
+    "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+    "aws.cloudformation.telemetry.enabled": false,
+    "sonarlint.automaticAnalysis": true,
+    "chat.viewSessions.orientation": "stacked",
+    "chat.mcp.gallery.enabled": true,
+    "hediet.vscode-drawio.resizeImages": null,
+    "plantuml.commandArgs": [
+      "-DGRAPHVIZ_DOT=/usr/bin/dot"
+    ],
+    "plantuml.jarArgs": [
+      "-DGRAPHVIZ_DOT=/usr/bin/dot"
+    ],
+    "chat.tools.terminal.autoApprove": {
+      "/^cd /home/maeversonwaitman/AMBIENTE/repositórios/Orquestrador\\\\ de\\\\ Jornadas/elevate-sparkle-core-backend/adapter-out-persistence/src/main/java/com/elevate/sparkle/adapter/out/persistence && mv adapter/OrderPersistenceAdapter\\.java\\.bak adapter/OrderPersistenceAdapter\\.java && mv mapper/OrderPersistenceMapper\\.java\\.bak mapper/OrderPersistenceMapper\\.java && echo \"Files restored successfully\"$/": {
+        "approve": true,
+        "matchCommandLine": true
+      }
+    },
+    "geminicodeassist.inlineSuggestions.enableAuto": true,
+    "settingsSync.ignoredExtensions": [
+      "ms-dotnettools.vscode-dotnet-runtime",
+      "mark-tucker.aws-cli-configure",
+      "mtsmfm.vscode-stl-viewer",
+      "ansenhuang.vscode-view-readme",
+      "octref.vetur",
+      "4ops.terraform",
+      "sumitnalavade.vscode-readme-editor",
+      "ms-python.vscode-python-envs",
+      "mebrahtom.plantumlpreviewer",
+      "well-ar.plantuml",
+      "jebbs.plantuml",
+      "justuskarlsson.plan-uml",
+      "bengreenier.vscode-node-readme",
+      "showzs.markdown-pdf-m",
+      "yzane.markdown-pdf",
+      "hashicorp.terraform",
+      "mquandalle.graphql",
+      "vscjava.vscode-gradle",
+      "eamodio.gitlens",
+      "vscjava.migrate-java-to-azure",
+      "google.geminicodeassist",
+      "docker.docker",
+      "ms-vscode-remote.remote-containers",
+      "ms-azuretools.vscode-containers",
+      "ms-vscode.cmake-tools",
+      "ms-vscode.cpp-devtools",
+      "twxs.cmake",
+      "jpantsjoha.c4x",
+      "ms-dotnettools.csdevkit",
+      "ms-dotnettools.csharp",
+      "ms-vscode.cpptools-extension-pack",
+      "ms-vscode.cpptools",
+      "editorconfig.editorconfig",
+      "ms-vscode.makefile-tools",
+      "fluiggers.fluiggers-fluig-vscode-extension",
+      "sonarsource.sonarlint-vscode"
+    ],
+    "vscode-edge-devtools.webhintInstallNotification": true,
+    "extensions.ignoreRecommendations": true,
+    "chat.tools.urls.autoApprove": {
+      "https://code.visualstudio.com": true,
+      "https://github.com/microsoft/vscode/wiki/*": true,
+      "https://docs.gitlab.com/user/application_security/policies": {
+        "approveRequest": false,
+        "approveResponse": true
+      },
+      "https://contabilizeicontabilidade.atlassian.net": {
+        "approveRequest": false,
+        "approveResponse": true
+      }
+    },
+    "terminal.integrated.mouseWheelScrollSensitivity": 3,
+    "terminal.integrated.gpuAcceleration": "off",
+    "claudeCode.preferredLocation": "panel",
+    "claudeCode.hideOnboarding": true
+  }

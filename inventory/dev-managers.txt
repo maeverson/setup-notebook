@@ -1,0 +1,3 @@
+DIR /home/maeverson.waitman@CONTABILIZEI.COM.BR/.nvm
+## nvm
+v26.5.0

@@ -1,0 +1,37 @@
+/etc/apt/keyrings:
+total 8
+drwxr-xr-x 2 root root 4096 Mar 31  2024 .
+drwxr-xr-x 9 root root 4096 Jul  7 08:19 ..
+
+/etc/apt/trusted.gpg.d:
+total 24
+drwxr-xr-x 2 root root 4096 Jul  7 11:44 .
+drwxr-xr-x 9 root root 4096 Jul  7 08:19 ..
+-rw-r--r-- 1 root root 3932 Jul  7 11:59 bitdefender-2022.gpg
+-rw-r--r-- 1 root root 1184 Jul  7 11:59 bitdefender.gpg
+-rw-r--r-- 1 root root 1165 Nov 27  2023 ubuntu-keyring-2012-cdimage.gpg
+-rw-r--r-- 1 root root 1167 Nov 27  2023 ubuntu-keyring-2018-archive.gpg
+
+/usr/share/keyrings:
+total 92
+drwxr-xr-x   2 root root  4096 Oct  7 07:35 .
+drwxr-xr-x 273 root root 12288 Sep 18 13:41 ..
+-rw-r--r--   1 root root  1688 Sep 18 13:41 claude-desktop-archive-keyring.asc
+-rw-r--r--   1 root root  6214 Oct  7 07:35 google-chrome.gpg
+-rw-r--r--   1 root root  1207 Jul 30 15:55 nodesource.gpg
+-rw-r--r--   1 root root  3607 Nov 25  2023 ubuntu-archive-keyring.gpg
+-rw-r--r--   1 root root  1227 Nov 25  2023 ubuntu-archive-removed-keys.gpg
+-rw-r--r--   1 root root  2444 Nov 25  2023 ubuntu-cloudimage-keyring.gpg
+-rw-r--r--   1 root root     0 Nov 25  2023 ubuntu-cloudimage-removed-keys.gpg
+-rw-r--r--   1 root root  1191 Nov 25  2023 ubuntu-master-keyring.gpg
+-rw-r--r--   1 root root  1150 Apr  7  2026 ubuntu-pro-anbox-cloud.gpg
+-rw-r--r--   1 root root  2247 Apr  7  2026 ubuntu-pro-cc-eal.gpg
+-rw-r--r--   1 root root  2274 Apr  7  2026 ubuntu-pro-cis.gpg
+-rw-r--r--   1 root root  2236 Apr  7  2026 ubuntu-pro-esm-apps.gpg
+-rw-r--r--   1 root root  2236 Apr  7  2026 ubuntu-pro-esm-apps-legacy.gpg
+-rw-r--r--   1 root root  2264 Apr  7  2026 ubuntu-pro-esm-infra.gpg
+-rw-r--r--   1 root root  2264 Apr  7  2026 ubuntu-pro-esm-infra-legacy.gpg
+-rw-r--r--   1 root root  2275 Apr  7  2026 ubuntu-pro-fips.gpg
+-rw-r--r--   1 root root  2275 Apr  7  2026 ubuntu-pro-fips-preview.gpg
+-rw-r--r--   1 root root  2250 Apr  7  2026 ubuntu-pro-realtime-kernel.gpg
+-rw-r--r--   1 root root  2235 Apr  7  2026 ubuntu-pro-ros.gpg

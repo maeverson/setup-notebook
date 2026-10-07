@@ -1,0 +1,8 @@
+/home/maeverson.waitman@CONTABILIZEI.COM.BR/.nvm/versions/node/v26.5.0/lib
+├── @github/copilot@1.0.74
+├── @sonar/scan@5.0.0
+├── @stripe/cli@1.53.0
+├── @usebruno/cli@4.0.0
+├── npm@12.0.1
+└── snyk@1.1307.2
+

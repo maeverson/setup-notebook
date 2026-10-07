@@ -1,0 +1,9 @@
+total 32
+drwxr-xr-x  8 root               root               4096 Jul 30 16:38 .
+drwxr-xr-x 23 root               root               4096 Jul  7 08:21 ..
+drwxr-xr-x  3 root               root               4096 Jul  7 11:59 Bitdefender
+drwxr-xr-x  8 root               root               4096 Jul 20 09:17 bitdefender-security-tools
+drwxr-xr-x 10 contabilizei-store contabilizei-store 4096 Jul 30 15:56 contabilizei-store
+drwx--x--x  4 root               root               4096 Jul 30 16:38 containerd
+drwxr-xr-x  4 guardiao           guardiao           4096 Jul  7 11:53 forticlient-sslvpn
+drwxr-xr-x  3 root               root               4096 Jul  7 11:36 google

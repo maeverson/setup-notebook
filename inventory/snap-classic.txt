@@ -1,0 +1,5 @@
+code
+dbeaver-ce
+google-cloud-cli
+intellij-idea-ultimate
+sublime-text

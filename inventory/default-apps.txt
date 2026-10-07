@@ -1,0 +1,17 @@
+[Default Applications]
+text/html=google-chrome.desktop
+x-scheme-handler/http=google-chrome.desktop
+x-scheme-handler/https=google-chrome.desktop
+x-scheme-handler/about=google-chrome.desktop
+x-scheme-handler/unknown=google-chrome.desktop
+x-scheme-handler/webcal=google-chrome.desktop
+x-scheme-handler/mailto=google-chrome.desktop
+x-scheme-handler/jetbrains=jetbrainsd.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+application/x-shellscript=sublime-text_subl.desktop
+x-scheme-handler/claude=com.anthropic.Claude.desktop
+application/json=sublime-text_subl.desktop
+
+[Added Associations]
+application/x-shellscript=sublime-text_subl.desktop;
+application/json=sublime-text_subl.desktop;

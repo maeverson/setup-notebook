@@ -1,0 +1,46 @@
+### /etc/apt/sources.list
+
+### /etc/apt/sources.list.d/claude-desktop.list
+deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main
+
+### /etc/apt/sources.list.d/google-chrome.sources
+X-Repolib-Name: Google Chrome
+Types: deb
+URIs: https://dl.google.com/linux/chrome-stable/deb/
+Suites: stable
+Components: main
+Architectures: amd64
+Signed-By: /usr/share/keyrings/google-chrome.gpg
+
+### /etc/apt/sources.list.d/nodesource.sources
+Types: deb
+URIs: https://deb.nodesource.com/node_22.x
+Suites: nodistro
+Components: main
+Architectures: amd64
+Signed-By: /usr/share/keyrings/nodesource.gpg
+
+### /etc/apt/sources.list.d/ubuntu.sources
+Types: deb
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates noble-backports
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+Types: deb
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+### /etc/apt/sources.list.d/ubuntu.sources.curtin.orig
+Types: deb
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates noble-backports
+Components: main universe restricted multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+Types: deb
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main universe restricted multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+

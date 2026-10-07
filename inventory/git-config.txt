@@ -1,0 +1,4 @@
+user.name=Maeverson Waitman (Maev)
+user.email=maeverson.waitman@contabilizei.com.br
+credential.https://gitlab.com.helper=
+credential.https://gitlab.com.helper=!/home/maeverson.waitman@CONTABILIZEI.COM.BR/.local/bin/glab auth git-credential

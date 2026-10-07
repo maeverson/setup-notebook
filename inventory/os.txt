@@ -1,0 +1,23 @@
+Distributor ID:	Ubuntu
+Description:	Ubuntu 24.04.5 LTS
+Release:	24.04
+Codename:	noble
+
+Linux T-N2965 7.0.0-31-generic #31~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Aug 10 09:38:02 UTC 2 x86_64 x86_64 x86_64 GNU/Linux
+
+ Static hostname: T-N2965
+       Icon name: computer-laptop
+         Chassis: laptop 💻
+      Machine ID: 5a8681d0567f44abacfa27980f410499
+         Boot ID: b13543e36ff9449fab9d7286e9c36ade
+Operating System: Ubuntu 24.04.5 LTS
+          Kernel: Linux 7.0.0-31-generic
+    Architecture: x86-64
+ Hardware Vendor: Dell Inc.
+  Hardware Model: Dell Pro 16 PC16250
+Firmware Version: 1.18.0
+   Firmware Date: Fri 2026-07-31
+    Firmware Age: 2month 1w
+
+SHELL=/bin/bash
+DESKTOP=ubuntu:GNOME SESSION=x11

@@ -1,0 +1,5 @@
+anydesk_global_tray.desktop
+claude-desktop.desktop
+
+Exec=/usr/bin/anydesk --tray
+Exec="/usr/lib/claude-desktop/claude-desktop" --startup

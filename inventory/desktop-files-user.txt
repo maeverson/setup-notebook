@@ -1,0 +1,13 @@
+chrome-chhhnicmimaleleeifhckaabkcifmcjp-Default.desktop
+chrome-dcfloamehjcblkjipmekkmpdcdonogob-Default.desktop
+chrome-fmpnliohjhemenmnlpbfagaolkdacoja-Default.desktop
+chrome-hnpfjngllnobngcgfapefoaidbinmjnm-Default.desktop
+chrome-jndlecohfigjmhidboiabnpjfmjgmacp-Default.desktop
+chrome-kjgfgldnnfoeklkmfkjfagphfepbbdan-Default.desktop
+chrome-pommaclcbfghclhalboakcipcmmndhcj-Default.desktop
+claude-code-url-handler.desktop
+com.anthropic.Claude.desktop
+jetbrainsd.desktop
+mimeapps.list
+mimeinfo.cache
+remmina.desktop

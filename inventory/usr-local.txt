@@ -1,0 +1,15 @@
+/usr/local/lib:
+total 12
+drwxr-xr-x  3 root root 4096 Feb 15  2025 .
+drwxr-xr-x 11 root root 4096 Jul  7 11:44 ..
+drwxr-xr-x  3 root root 4096 Feb 15  2025 python3.12
+
+/usr/local/share:
+total 28
+drwxr-xr-x  7 root root  4096 Feb 15  2025 .
+drwxr-xr-x 11 root root  4096 Jul  7 11:44 ..
+drwxr-xr-x  2 root root  4096 Jul  7 11:44 ca-certificates
+drwxrwsr-x  2 root staff 4096 Feb 15  2025 fonts
+drwxr-xr-x  2 root root  4096 Feb 15  2025 man
+drwxr-xr-x  7 root root  4096 Feb 15  2025 sgml
+drwxr-xr-x  6 root root  4096 Feb 15  2025 xml

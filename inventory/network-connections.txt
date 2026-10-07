@@ -1,0 +1,18 @@
+Wired connection 1:802-3-ethernet:enp44s0
+docker0:bridge:docker0
+lo:loopback:lo
+br-0f9f6af6185c:bridge:br-0f9f6af6185c
+br-9a938765007c:bridge:br-9a938765007c
+br-e2b82e47e859:bridge:br-e2b82e47e859
+BIBI S HOUSE:802-11-wireless:
+CERP_VISITANTE:802-11-wireless:
+CTBZ-Corp:802-11-wireless:
+DIRECT-epson-026d-0-001:802-11-wireless:
+ESTANPLAZA:802-11-wireless:
+Familia Waitman:802-11-wireless:
+iPhone de Maéverson:802-11-wireless:
+Romano-2.4G:802-11-wireless:
+Romano-2.4G 1:802-11-wireless:
+SomaClientes:802-11-wireless:
+sthvisitantes:802-11-wireless:
+Wired connection 2:802-3-ethernet:

@@ -1,0 +1,2 @@
+/home/maeverson.waitman@CONTABILIZEI.COM.BR/.local/share/icons:
+hicolor

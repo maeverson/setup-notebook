@@ -1,0 +1,22 @@
+## /usr/local/bin
+total 16
+drwxr-xr-x  2 root root 4096 Jul  7 11:36 .
+drwxr-xr-x 11 root root 4096 Jul  7 11:44 ..
+-rwxr-xr-x  1 root root  213 Jul  7 11:36 gdown
+-rwxr-xr-x  1 root root  207 Jul  7 11:36 tqdm
+
+## ~/.local/bin
+total 310264
+drwxr-xr-x 2 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR      4096 Oct  5 08:57 .
+drwx------ 6 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR      4096 Oct  1 16:59 ..
+-rwxr-xr-x 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR 188830144 Jul 22 14:18 agy
+lrwxrwxrwx 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR        80 Sep 30 16:49 claude -> /home/maeverson.waitman@CONTABILIZEI.COM.BR/.local/share/claude/versions/2.1.286
+lrwxrwxrwx 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR        79 Jul 31 11:21 cloud-sql-proxy -> /home/maeverson.waitman@CONTABILIZEI.COM.BR/opt/cloud-sql-proxy/cloud-sql-proxy
+lrwxrwxrwx 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR        88 Aug 17 14:10 codex -> /home/maeverson.waitman@CONTABILIZEI.COM.BR/.codex/packages/standalone/current/bin/codex
+lrwxrwxrwx 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR        83 Jul 30 12:42 flow -> /home/maeverson.waitman@CONTABILIZEI.COM.BR/.local/share/uv/tools/flow-cli/bin/flow
+-rwxr-xr-x 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR  51724448 Oct  5 08:57 glab
+lrwxrwxrwx 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR        90 Jul 23 14:27 headroom -> /home/maeverson.waitman@CONTABILIZEI.COM.BR/.local/share/uv/tools/headroom-ai/bin/headroom
+-rwxr-xr-x 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR     12503 Sep 16 12:55 proxy
+-rwxr-xr-x 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR  11040640 Sep 24 07:06 rtk
+-rwxr-xr-x 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR  65697112 Jul 21 21:58 uv
+-rwxr-xr-x 1 maeverson.waitman@CONTABILIZEI.COM.BR domain users@CONTABILIZEI.COM.BR    351120 Jul 21 21:58 uvx
