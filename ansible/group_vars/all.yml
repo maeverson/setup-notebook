@@ -1,0 +1,238 @@
+---
+# Preenchido a partir de inventory/ (notebook ANTIGO: Dell Pro 16 "T-N2965", Ubuntu 24.04.5 noble,
+# coletado em 2026-10-07). Cada item tem origem rastreável — ver INVENTORY.md. Itens sem origem
+# confirmada estão em UNKNOWN.md; passos humanos em MANUAL.md.
+target_user: "{{ ansible_facts['user_id'] }}"
+target_home: "{{ ansible_facts['env']['HOME'] }}"
+ubuntu_codename: "{{ ansible_facts['distribution_release'] }}"
+
+# --- apt: repositórios de terceiros (deb822) ---
+# Google Chrome NÃO entra aqui: o .deb oficial (deb_manual) cria e mantém o próprio repo.
+# VS Code é tratado pela role vscode.
+apt_repos:
+  - name: nodesource                      # apt-sources.txt: nodesource.sources (nodejs 22.23.2-1nodesource1)
+    uris: https://deb.nodesource.com/node_22.x
+    suites: nodistro
+    components: main
+    key_url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    architectures: amd64
+    # pin 22.x: com "present" o nodejs 18 do Ubuntu, se já instalado, satisfaria a task
+    packages: ["nodejs=22.*"]
+
+# --- apt: repos cujo pacote reescreve o próprio .list no postinst ---
+# Recriamos o arquivo EXATAMENTE como o pacote grava (mesmo nome e mesmo keyring), só se ainda
+# não existir; depois o pacote assume. Usar deb822 com outro keyring gera
+# "Conflicting values set for option Signed-By" e quebra o apt (ocorrido na Fase 4).
+apt_list_repos:
+  - name: claude-desktop                  # apt-sources.txt: claude-desktop.list (claude-desktop 2.110.1)
+    key_url: https://downloads.claude.ai/claude-desktop/key.asc
+    keyring: /usr/share/keyrings/claude-desktop-archive-keyring.asc
+    line: >-
+      deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc]
+      https://downloads.claude.ai/claude-desktop/apt/stable stable main
+    packages: [claude-desktop]
+
+# Arquivos de repo que conflitam com os acima (criados pela 1ª versão deste playbook).
+apt_obsolete_repo_files:
+  - /etc/apt/sources.list.d/claude-desktop.sources
+  - /etc/apt/keyrings/claude-desktop.asc
+
+apt_ppas: []                              # nenhum PPA no notebook antigo
+
+# --- apt: pacotes do archive Ubuntu (apt-manual.txt). nodejs e claude-desktop ficam em apt_repos[].packages ---
+# Fora da lista, por serem do sistema base/imagem: ubuntu-*, kernel/grub/shim, coreutils,
+# language-pack-en*, ibus-table-*, libchewing/libpinyin/m17n/opencc (deps do ibus).
+apt_packages:
+  # build / dev
+  - build-essential
+  - cmake
+  - make
+  - git
+  - curl
+  - wget
+  - jq
+  - unzip
+  - gnupg
+  - ca-certificates
+  - apt-transport-https
+  - graphviz                              # usado pelo PlantUML no VS Code
+  - ffmpeg
+  # java
+  - default-jre
+  - openjdk-8-jdk
+  - openjdk-17-jdk
+  - openjdk-25-jre-headless
+  - maven
+  # python
+  - python3
+  - python3-pip
+  - python3-venv
+  - python3-netifaces
+  - pipx
+  # desktop / utilitários
+  - dconf-editor
+  - flameshot
+  - tilix
+  - vlc
+  - usb-creator-gtk
+  - imvirt
+  - x11-xserver-utils
+  # libs instaladas explicitamente por um instalador (apt-history: "apt-get install -y -qq python3 ... libgtk-3-0t64 libasound2t64")
+  - libnss3
+  - libnspr4
+  - libatk1.0-0t64
+  - libatk-bridge2.0-0t64
+  - libcups2t64
+  - libdrm2
+  - libxkbcommon0
+  - libgtk-3-0t64
+  - libgtk2.0-0t64
+  - libgdk-pixbuf2.0-0
+  - libx11-6
+  - libasound2t64
+
+# Ingresso no AD (CONTABILIZEI.COM.BR). No antigo o usuário era de domínio
+# (maeverson.waitman@CONTABILIZEI.COM.BR); no novo é local. O join exige credencial do TI → MANUAL.md.
+ad_join_enabled: false
+ad_join_packages: [adcli, realmd, sssd, sssd-tools, libnss-sss, libpam-sss, oddjob, oddjob-mkhomedir, samba-common-bin, packagekit]
+
+# --- .deb sem repo configurado (apt-origins.tsv -> /var/lib/dpkg/status) ---
+# Somente os com URL oficial pública. Agentes corporativos (anydesk, bitdefender, flexxagent,
+# forticlient-sslvpn, contabilizei-store) são do TI → MANUAL.md.
+deb_manual:
+  - { name: google-chrome-stable, url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb }
+
+# --- snap (snap.txt / snap-classic.txt) ---
+# Omitidos: bases/runtime (core*, gnome-*, kf5-*, mesa-2404, gtk-common-themes, bare, snapd),
+# padrão do Ubuntu (firefox, firmware-updater, snap-store, snapd-desktop-integration),
+# code (VS Code vai por repo — ver vscode_install_method), libreoffice (o novo já tem o .deb),
+# test-edge-only (snap de teste).
+snap_packages:
+  - { name: bruno }
+  - { name: dbeaver-ce, classic: true }
+  - { name: gemini }
+  - { name: google-cloud-cli, classic: true }
+  - { name: intellij-idea-ultimate, classic: true }
+  - { name: keepassxc }
+  - { name: ngrok, channel: v3/stable }
+  - { name: remmina }
+  - { name: spotify }
+  - { name: sublime-text, classic: true }
+  - { name: teams-for-linux }
+  - { name: zoom-client }
+
+# --- flatpak --- (não instalado no antigo)
+flatpak_remotes:
+  - { name: flathub, url: https://flathub.org/repo/flathub.flatpakrepo }
+flatpak_packages: []
+
+# --- docker --- (docker.io 29.1.3-0ubuntu3~24.04.2 do archive Ubuntu)
+docker_enabled: true
+docker_source: ubuntu                     # official | ubuntu  (não misturar)
+
+# --- dev tools ---
+pipx_packages:
+  - gdown                                 # no antigo: pip do sistema em /usr/local/bin/{gdown,tqdm}
+uv_install: true                          # ~/.local/bin/uv, uvx
+uv_tools:
+  - headroom-ai                           # ~/.local/share/uv/tools/headroom-ai
+claude_code_install: true                 # ~/.local/bin/claude -> ~/.local/share/claude/versions/
+glab_version: "1.120.0"                   # ~/.local/bin/glab (binário do release GitLab)
+npm_global_packages:                      # npm-global.txt (node via nvm)
+  - "@github/copilot"
+  - "@sonar/scan"
+  - "@stripe/cli"
+  - "@usebruno/cli"
+  - snyk
+sdkman_install: false
+sdkman_candidates: []
+nvm_install: true
+nvm_version: v0.40.3
+nvm_node_versions: ["26.5.0"]             # dev-managers.txt: nvm v26.5.0
+rustup_install: false
+go_tools: []
+cargo_packages: []
+
+# --- vscode ---
+# No antigo era snap; o novo já tem VS Code do repo Microsoft (vscode.sources). Mantém repo
+# para não ter duas instalações.
+vscode_enabled: true
+vscode_install_method: repo               # repo | snap
+vscode_extensions:                        # lista do antigo não foi coletada → UNKNOWN.md / Settings Sync
+  - anthropic.claude-code
+vscode_copy_settings: true                # files/vscode/settings.json e keybindings.json
+
+# --- git (git-config.txt; credential helper do glab é criado por `glab auth login`) ---
+git_user_name: "Maeverson Waitman (Maev)"
+git_user_email: maeverson.waitman@contabilizei.com.br
+
+# --- dotfiles --- (sem repo; .bashrc do antigo só tinha PATH, já coberto pelo .profile padrão)
+dotfiles_repo: ""
+dotfiles_copy_files: false                # true copia files/dotfiles/ (revisar segredos antes)
+dotfiles_dest: "{{ target_home }}/.dotfiles"
+default_shell: /bin/bash
+install_ohmyzsh: false
+install_starship: false
+
+# --- desktop (GNOME) --- (dconf-dump.ini)
+gnome_extensions: []                      # só extensões padrão do Ubuntu (ding, ubuntu-dock, tiling-assistant, appindicators)
+dconf_settings:
+  - { key: /org/gnome/desktop/interface/color-scheme, value: "'prefer-dark'" }
+  - { key: /org/gnome/desktop/interface/gtk-theme, value: "'Yaru-dark'" }
+  - { key: /org/gnome/desktop/interface/icon-theme, value: "'Yaru'" }
+  - { key: /org/gnome/desktop/input-sources/sources, value: "[('xkb', 'br')]" }
+  - { key: /org/gnome/desktop/peripherals/keyboard/numlock-state, value: "true" }
+  - { key: /org/gnome/desktop/privacy/old-files-age, value: "uint32 30" }
+  - { key: /org/gnome/desktop/privacy/recent-files-max-age, value: "-1" }
+  - { key: /org/gnome/desktop/session/idle-delay, value: "uint32 0" }
+  - { key: /org/gnome/desktop/sound/allow-volume-above-100-percent, value: "true" }
+  - { key: /org/gnome/nautilus/preferences/default-folder-viewer, value: "'list-view'" }
+  - { key: /org/gnome/settings-daemon/plugins/color/night-light-enabled, value: "false" }
+  - { key: /org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-timeout, value: "3600" }
+  - { key: /org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-type, value: "'nothing'" }
+  - { key: /org/gnome/shell/extensions/dash-to-dock/dash-max-icon-size, value: "48" }
+  - { key: /org/gnome/shell/extensions/dash-to-dock/dock-position, value: "'BOTTOM'" }
+  - { key: /org/gnome/shell/extensions/dash-to-dock/extend-height, value: "false" }
+  - { key: /org/gnome/shell/extensions/ding/show-home, value: "false" }
+  - { key: /org/gnome/shell/extensions/tiling-assistant/active-window-hint-color, value: "'rgb(211,70,21)'" }
+  - { key: /org/gnome/shell/extensions/tiling-assistant/tiling-popup-all-workspace, value: "true" }
+  # code_code.desktop (snap) trocado por code.desktop (repo). Atalhos chrome-*-Default.desktop
+  # são PWAs que só existem após o Chrome sincronizar; o GNOME ignora entradas ausentes.
+  - key: /org/gnome/shell/favorite-apps
+    value: >-
+      ['google-chrome.desktop', 'firefox_firefox.desktop', 'org.gnome.Nautilus.desktop',
+      'chrome-pommaclcbfghclhalboakcipcmmndhcj-Default.desktop', 'chrome-kjgfgldnnfoeklkmfkjfagphfepbbdan-Default.desktop',
+      'intellij-idea-ultimate_intellij-idea-ultimate.desktop', 'code.desktop', 'sublime-text_subl.desktop',
+      'dbeaver-ce_dbeaver-ce.desktop', 'com.gexperts.Tilix.desktop', 'chrome-dcfloamehjcblkjipmekkmpdcdonogob-Default.desktop',
+      'chrome-chhhnicmimaleleeifhckaabkcifmcjp-Default.desktop', 'keepassxc_keepassxc.desktop', 'bruno_bruno.desktop',
+      'forticlient-sslvpn.desktop', 'chrome-jndlecohfigjmhidboiabnpjfmjgmacp-Default.desktop', 'com.anthropic.Claude.desktop',
+      'chrome-hnpfjngllnobngcgfapefoaidbinmjnm-Default.desktop', 'teams-for-linux_teams-for-linux.desktop']
+user_fonts_dir: files/fonts
+
+# --- Fase 5: CLIs de IA e ferramentas avulsas (antigo: ~/.local/bin) ---
+ai_tools_installers:
+  - name: agy                             # Google Antigravity CLI (~180 MB; antigo: 188 MB)
+    url: https://antigravity.google/cli/install.sh
+    creates: "{{ target_home }}/.local/bin/agy"
+  - name: codex                           # OpenAI Codex CLI (antigo: ~/.codex/packages/standalone)
+    url: https://chatgpt.com/codex/install.sh
+    shell: sh
+    creates: "{{ target_home }}/.local/bin/codex"
+  - name: rtk                             # Rust Token Killer (rtk-ai/rtk) — confirmar no Dell com `rtk gain`
+    url: https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh
+    shell: sh
+    creates: "{{ target_home }}/.local/bin/rtk"
+rtk_claude_hook: false                    # true roda `rtk init --global` (registra hook em ~/.claude/settings.json)
+cloud_sql_proxy_version: v2.26.0          # versão do Dell desconhecida; v2.26.0 = última em 2026-10-07
+install_proxy_script: true                # files/bin/proxy (select-proxy.sh do antigo)
+kubectl_from_gcloud_snap: true            # snap alias google-cloud-cli.kubectl -> kubectl
+flow_cli_install: true                    # uv tool install flow-cli@latest (índice privado do GitLab)
+flow_cli_index_path: gitlab.com/api/v4/projects/66189044/packages/pypi/simple
+# Token: exporte FLOW_GITLAB_TOKEN (PAT com read_api + read_registry) ou UV_EXTRA_INDEX_URL antes de rodar.
+
+# --- Fase 5: MCP / plugins do Claude Code (de ~/.claude.json do antigo: só nome/URL) ---
+claude_mcp_servers:
+  - { name: base-conhecimento, transport: http, url: "https://processos.ctbz.com.br/mcp/base-conhecimento", scope: user }
+claude_plugins:
+  # no antigo: stripe@claude-plugins-official; o marketplace embutido agora é anthropic-plugin-directory
+  - stripe@anthropic-plugin-directory     # github.com/stripe/ai — traz o MCP da Stripe (https://mcp.stripe.com/)

@@ -1,0 +1,43 @@
+---
+- name: Assert supported Ubuntu
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == "Ubuntu"
+      - ansible_facts['distribution_major_version'] | int >= 24
+    fail_msg: >-
+      Playbook destinado a Ubuntu 24+. Detectado:
+      {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}
+
+- name: Remove obsolete/conflicting apt repo files
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ apt_obsolete_repo_files | default([]) }}"
+
+- name: Update apt cache
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Base packages
+  become: true
+  ansible.builtin.apt:
+    name:
+      - curl
+      - wget
+      - git
+      - gnupg
+      - ca-certificates
+      - apt-transport-https
+      - software-properties-common
+      - build-essential
+      - unzip
+      - zip
+      - jq
+      - htop
+      - tree
+      - pipx
+      - python3-psutil
+    state: present

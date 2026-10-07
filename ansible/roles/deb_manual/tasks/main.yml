@@ -1,0 +1,20 @@
+---
+- name: Gather installed packages
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Download manual .deb files
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "/tmp/{{ item.name }}.deb"
+    mode: "0644"
+  loop: "{{ deb_manual }}"
+  when: item.name not in ansible_facts.packages
+
+- name: Install manual .deb files
+  become: true
+  ansible.builtin.apt:
+    deb: "/tmp/{{ item.name }}.deb"
+  loop: "{{ deb_manual }}"
+  # em --check o get_url não baixa nada, então não há .deb para avaliar
+  when: item.name not in ansible_facts.packages and not ansible_check_mode

@@ -1,0 +1,76 @@
+---
+# Fase 5 — CLIs de IA e ferramentas avulsas que no antigo viviam em ~/.local/bin.
+
+- name: Ensure ~/.local/bin
+  ansible.builtin.file: { path: "{{ target_home }}/.local/bin", state: directory, mode: "0775" }
+
+- name: Official installers (agy, codex, rtk)
+  ansible.builtin.shell: set -o pipefail && curl -fsSL {{ item.url }} | {{ item.shell | default('bash') }}
+  args:
+    executable: /bin/bash
+    creates: "{{ item.creates }}"
+  loop: "{{ ai_tools_installers }}"
+  loop_control: { label: "{{ item.name }}" }
+
+- name: Claude Code hook do rtk (altera ~/.claude/settings.json)
+  ansible.builtin.shell: |
+    set -o pipefail
+    if grep -q rtk {{ target_home }}/.claude/settings.json 2>/dev/null; then echo present; else {{ target_home }}/.local/bin/rtk init --global; fi
+  args: { executable: /bin/bash }
+  register: ai_tools_rtk_init
+  changed_when: "'present' not in ai_tools_rtk_init.stdout"
+  when: rtk_claude_hook and not ansible_check_mode
+
+- name: Cloud SQL Auth Proxy
+  when: cloud_sql_proxy_version | length > 0
+  block:
+    - name: Check installed cloud-sql-proxy version
+      ansible.builtin.command: "{{ target_home }}/.local/bin/cloud-sql-proxy --version"
+      register: ai_tools_csp
+      changed_when: false
+      failed_when: false
+      check_mode: false  # só leitura
+    - name: Install cloud-sql-proxy {{ cloud_sql_proxy_version }}
+      ansible.builtin.get_url:
+        url: "https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/{{ cloud_sql_proxy_version }}/cloud-sql-proxy.linux.amd64"
+        dest: "{{ target_home }}/.local/bin/cloud-sql-proxy"
+        mode: "0755"
+        force: true
+      when: cloud_sql_proxy_version | regex_replace('^v', '') not in (ai_tools_csp.stdout | default(''))
+
+# select-proxy.sh: procura o binário "cloud-sql-proxy" na mesma pasta do script.
+- name: Script proxy (launcher interativo do Cloud SQL Proxy)
+  ansible.builtin.copy:
+    src: bin/proxy
+    dest: "{{ target_home }}/.local/bin/proxy"
+    mode: "0755"
+  when: install_proxy_script
+
+- name: Alias kubectl do snap google-cloud-cli
+  become: true
+  community.general.snap_alias:
+    name: google-cloud-cli.kubectl        # app, não o snap: com só o snap o alias falha sem erro
+    alias: kubectl
+  when: kubectl_from_gcloud_snap
+
+# Flow CLI: PyPI privado no GitLab Package Registry (doc "Flow - Documentação Completa", Outline).
+# O PAT (read_api + read_registry) só entra em tempo de execução, via ambiente — nunca no repo.
+- name: Flow CLI
+  when: flow_cli_install
+  vars:
+    ai_tools_flow_index: >-
+      {{ lookup('ansible.builtin.env', 'UV_EXTRA_INDEX_URL')
+         or ('https://gitlab-ci-token:' ~ lookup('ansible.builtin.env', 'FLOW_GITLAB_TOKEN') ~ '@' ~ flow_cli_index_path
+             if lookup('ansible.builtin.env', 'FLOW_GITLAB_TOKEN') else '') }}
+  block:
+    - name: Flow CLI sem token — pulando (ver MANUAL.md)
+      ansible.builtin.debug:
+        msg: "Defina FLOW_GITLAB_TOKEN (ou UV_EXTRA_INDEX_URL) antes do ansible-playbook para instalar o flow-cli."
+      when: ai_tools_flow_index | length == 0
+    - name: Install flow-cli
+      ansible.builtin.command: "{{ target_home }}/.local/bin/uv tool install flow-cli@latest"
+      args: { creates: "{{ target_home }}/.local/share/uv/tools/flow-cli" }
+      environment:
+        UV_EXTRA_INDEX_URL: "{{ ai_tools_flow_index }}"
+      no_log: true
+      when: ai_tools_flow_index | length > 0 and not ansible_check_mode

@@ -1,0 +1,68 @@
+---
+- name: Ensure keyrings dir
+  become: true
+  ansible.builtin.file: { path: /etc/apt/keyrings, state: directory, mode: "0755" }
+
+- name: Add third-party repos (deb822)
+  become: true
+  ansible.builtin.deb822_repository:
+    name: "{{ item.name }}"
+    uris: "{{ item.uris }}"
+    suites: "{{ item.suites }}"
+    components: "{{ item.components | default('main') }}"
+    architectures: "{{ item.architectures | default('amd64') }}"
+    signed_by: "{{ item.key_url }}"
+    state: present
+  loop: "{{ apt_repos }}"
+  notify: Apt update
+
+- name: Download keys for package-managed .list repos (only if missing)
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ item.key_url }}"
+    dest: "{{ item.keyring }}"
+    mode: "0644"
+    force: false
+  loop: "{{ apt_list_repos }}"
+  loop_control: { label: "{{ item.name }}" }
+
+- name: Bootstrap package-managed .list repos (package takes over afterwards)
+  become: true
+  ansible.builtin.copy:
+    content: "{{ item.line }}\n"
+    dest: "/etc/apt/sources.list.d/{{ item.name }}.list"
+    mode: "0644"
+    force: false
+  loop: "{{ apt_list_repos }}"
+  loop_control: { label: "{{ item.name }}" }
+  notify: Apt update
+
+- name: Add PPAs
+  become: true
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    state: present
+  loop: "{{ apt_ppas }}"
+  notify: Apt update
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Check which repo files exist
+  ansible.builtin.stat:
+    path: "/etc/apt/sources.list.d/{{ item.name }}.{{ 'list' if item.line is defined else 'sources' }}"
+  loop: "{{ apt_repos + apt_list_repos }}"
+  loop_control: { label: "{{ item.name }}" }
+  register: apt_repos_files
+
+- name: Install packages from third-party repos
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item.item.packages }}"
+    state: present
+  loop: "{{ apt_repos_files.results }}"
+  loop_control: { label: "{{ item.item.name }}" }
+  # em --check o repo novo não é gravado de fato; só dá para avaliar repos já presentes
+  when:
+    - item.item.packages | default([]) | length > 0
+    - not ansible_check_mode or item.stat.exists

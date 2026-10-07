@@ -1,0 +1,87 @@
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/maeversonwaitman/notebook-provision/ansible/roles/apt_repos/tasks/main.yml:42:3
+
+40 - name: Add PPAs
+41   become: true
+42   ansible.builtin.apt_repository:
+     ^ column 3
+
+
+PLAY [Provisionar notebook corporativo (Ubuntu 24.04+)] ************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [localhost]
+
+TASK [ai_tools : Ensure ~/.local/bin] ******************************************
+ok: [localhost]
+
+TASK [ai_tools : Official installers (agy, codex, rtk)] ************************
+changed: [localhost] => (item=agy)
+changed: [localhost] => (item=codex)
+changed: [localhost] => (item=rtk)
+
+TASK [ai_tools : Claude Code hook do rtk (altera ~/.claude/settings.json)] *****
+skipping: [localhost]
+
+TASK [ai_tools : Check installed cloud-sql-proxy version] **********************
+ok: [localhost]
+
+TASK [ai_tools : Install cloud-sql-proxy v2.26.0] ******************************
+changed: [localhost]
+
+TASK [ai_tools : Script proxy (launcher interativo do Cloud SQL Proxy)] ********
+changed: [localhost]
+
+TASK [ai_tools : Alias kubectl do snap google-cloud-cli] ***********************
+changed: [localhost]
+
+TASK [ai_tools : Flow (fonte interna, ver UNKNOWN.md)] *************************
+skipping: [localhost]
+
+TASK [mcp_servers : Check claude CLI] ******************************************
+ok: [localhost]
+
+TASK [mcp_servers : Check existing MCP servers] ********************************
+ok: [localhost] => (item=base-conhecimento)
+
+TASK [mcp_servers : Add MCP servers] *******************************************
+changed: [localhost] => (item=base-conhecimento)
+
+TASK [mcp_servers : List installed plugins] ************************************
+ok: [localhost]
+
+TASK [mcp_servers : Install plugins] *******************************************
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: /home/maeversonwaitman/notebook-provision/ansible/roles/mcp_servers/tasks/main.yml:41:7
+
+39       check_mode: false  # só leitura
+40
+41     - name: Install plugins
+         ^ column 7
+
+failed: [localhost] (item=stripe@claude-plugins-official) => 
+    ansible_loop_var: item
+    changed: true
+    changed_when_result: true
+    cmd:
+    - /home/maeversonwaitman/.local/bin/claude
+    - plugin
+    - install
+    - stripe@claude-plugins-official
+    delta: '0:00:00.738476'
+    end: '2026-10-07 11:04:42.015069'
+    item: stripe@claude-plugins-official
+    msg: The command exited with a non-zero return code.
+    rc: 1
+    start: '2026-10-07 11:04:41.276593'
+    stderr: '✘ Failed to install plugin "stripe@claude-plugins-official": Plugin "stripe"
+        not found in marketplace "claude-plugins-official". Your local copy may be out
+        of date — try `claude plugin marketplace update claude-plugins-official`.'
+    stderr_lines: <omitted>
+    stdout: Installing plugin "stripe@claude-plugins-official"...
+    stdout_lines: <omitted>
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=11   changed=5    unreachable=0    failed=1    skipped=2    rescued=0    ignored=0   
+

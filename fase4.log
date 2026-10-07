@@ -1,0 +1,261 @@
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/maeversonwaitman/notebook-provision/ansible/roles/apt_repos/tasks/main.yml:42:3
+
+40 - name: Add PPAs
+41   become: true
+42   ansible.builtin.apt_repository:
+     ^ column 3
+
+
+PLAY [Provisionar notebook corporativo (Ubuntu 24.04+)] ************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [localhost]
+
+TASK [base : Assert supported Ubuntu] ******************************************
+ok: [localhost] => 
+    changed: false
+    msg: All assertions passed
+
+TASK [base : Remove obsolete/conflicting apt repo files] ***********************
+changed: [localhost] => (item=/etc/apt/sources.list.d/claude-desktop.sources)
+changed: [localhost] => (item=/etc/apt/keyrings/claude-desktop.asc)
+
+TASK [base : Update apt cache] *************************************************
+ok: [localhost]
+
+TASK [base : Base packages] ****************************************************
+ok: [localhost]
+
+TASK [apt_repos : Ensure keyrings dir] *****************************************
+ok: [localhost]
+
+TASK [apt_repos : Add third-party repos (deb822)] ******************************
+ok: [localhost] => (item={'name': 'nodesource', 'uris': 'https://deb.nodesource.com/node_22.x', 'suites': 'nodistro', 'components': 'main', 'key_url': 'https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key', 'architectures': 'amd64', 'packages': ['nodejs=22.*']})
+
+TASK [apt_repos : Download keys for package-managed .list repos (only if missing)] ***
+ok: [localhost] => (item=claude-desktop)
+
+TASK [apt_repos : Bootstrap package-managed .list repos (package takes over afterwards)] ***
+ok: [localhost] => (item=claude-desktop)
+
+TASK [apt_repos : Add PPAs] ****************************************************
+skipping: [localhost]
+
+TASK [apt_repos : Flush handlers] **********************************************
+
+TASK [apt_repos : Check which repo files exist] ********************************
+ok: [localhost] => (item=nodesource)
+ok: [localhost] => (item=claude-desktop)
+
+TASK [apt_repos : Install packages from third-party repos] *********************
+changed: [localhost] => (item=nodesource)
+ok: [localhost] => (item=claude-desktop)
+
+TASK [apt_packages : Install apt packages] *************************************
+changed: [localhost]
+
+TASK [apt_packages : Install AD join packages (join itself is manual, see MANUAL.md)] ***
+skipping: [localhost]
+
+TASK [deb_manual : Gather installed packages] **********************************
+ok: [localhost]
+
+TASK [deb_manual : Download manual .deb files] *********************************
+skipping: [localhost] => (item={'name': 'google-chrome-stable', 'url': 'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'}) 
+skipping: [localhost]
+
+TASK [deb_manual : Install manual .deb files] **********************************
+skipping: [localhost] => (item={'name': 'google-chrome-stable', 'url': 'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'}) 
+skipping: [localhost]
+
+TASK [snap : Install snaps] ****************************************************
+changed: [localhost] => (item={'name': 'bruno'})
+changed: [localhost] => (item={'name': 'dbeaver-ce', 'classic': True})
+changed: [localhost] => (item={'name': 'gemini'})
+changed: [localhost] => (item={'name': 'google-cloud-cli', 'classic': True})
+changed: [localhost] => (item={'name': 'intellij-idea-ultimate', 'classic': True})
+changed: [localhost] => (item={'name': 'keepassxc'})
+changed: [localhost] => (item={'name': 'ngrok', 'channel': 'v3/stable'})
+changed: [localhost] => (item={'name': 'remmina'})
+changed: [localhost] => (item={'name': 'spotify'})
+ok: [localhost] => (item={'name': 'sublime-text', 'classic': True})
+changed: [localhost] => (item={'name': 'teams-for-linux'})
+changed: [localhost] => (item={'name': 'zoom-client'})
+
+TASK [flatpak : Install flatpak] ***********************************************
+skipping: [localhost]
+
+TASK [flatpak : Add remotes] ***************************************************
+skipping: [localhost] => (item={'name': 'flathub', 'url': 'https://flathub.org/repo/flathub.flatpakrepo'}) 
+skipping: [localhost]
+
+TASK [flatpak : Install flatpaks] **********************************************
+skipping: [localhost]
+
+TASK [docker : Add Docker repo] ************************************************
+skipping: [localhost]
+
+TASK [docker : Apt update] *****************************************************
+skipping: [localhost]
+
+TASK [docker : Install Docker CE] **********************************************
+skipping: [localhost]
+
+TASK [docker : Docker (ubuntu repo)] *******************************************
+changed: [localhost]
+
+TASK [docker : Add user to docker group] ***************************************
+changed: [localhost]
+
+TASK [docker : Enable docker service] ******************************************
+ok: [localhost]
+
+TASK [dev_tools : Pipx packages] ***********************************************
+changed: [localhost] => (item=gdown)
+
+TASK [dev_tools : Install uv (official installer -> ~/.local/bin)] *************
+changed: [localhost]
+
+TASK [dev_tools : Uv tools] ****************************************************
+changed: [localhost] => (item=headroom-ai)
+
+TASK [dev_tools : Claude Code (native installer -> ~/.local/bin/claude)] *******
+changed: [localhost]
+
+TASK [dev_tools : Check installed glab version] ********************************
+ok: [localhost]
+
+TASK [dev_tools : Download glab tarball] ***************************************
+changed: [localhost]
+
+TASK [dev_tools : Ensure ~/.local/bin] *****************************************
+ok: [localhost]
+
+TASK [dev_tools : Extract glab binary] *****************************************
+changed: [localhost]
+
+TASK [dev_tools : Install sdkman] **********************************************
+skipping: [localhost]
+
+TASK [dev_tools : Sdkman candidates] *******************************************
+skipping: [localhost]
+
+TASK [dev_tools : Install nvm v0.40.3] *****************************************
+changed: [localhost]
+
+TASK [dev_tools : Node versions] ***********************************************
+changed: [localhost] => (item=26.5.0)
+
+TASK [dev_tools : Npm global packages (default nvm node)] **********************
+changed: [localhost] => (item=@github/copilot)
+changed: [localhost] => (item=@sonar/scan)
+changed: [localhost] => (item=@stripe/cli)
+changed: [localhost] => (item=@usebruno/cli)
+changed: [localhost] => (item=snyk)
+
+TASK [dev_tools : Install rustup] **********************************************
+skipping: [localhost]
+
+TASK [dev_tools : Cargo packages] **********************************************
+skipping: [localhost]
+
+TASK [dev_tools : Go tools] ****************************************************
+skipping: [localhost]
+
+TASK [vscode : Check for package-managed VS Code repo] *************************
+ok: [localhost] => (item=list)
+ok: [localhost] => (item=sources)
+
+TASK [vscode : Add repo (skipped if the code package already manages one)] *****
+skipping: [localhost]
+
+TASK [vscode : Apt update] *****************************************************
+skipping: [localhost]
+
+TASK [vscode : Install code] ***************************************************
+ok: [localhost]
+
+TASK [vscode : VS Code via snap] ***********************************************
+skipping: [localhost]
+
+TASK [vscode : Installed extensions] *******************************************
+ok: [localhost]
+
+TASK [vscode : Install extensions] *********************************************
+skipping: [localhost] => (item=anthropic.claude-code) 
+skipping: [localhost]
+
+TASK [vscode : Ensure VS Code user dir] ****************************************
+ok: [localhost]
+
+TASK [vscode : Copy settings (backup of existing file is kept)] ****************
+changed: [localhost] => (item=settings.json)
+changed: [localhost] => (item=keybindings.json)
+
+TASK [dotfiles : Clone dotfiles repo] ******************************************
+skipping: [localhost]
+
+TASK [dotfiles : Copy dotfiles from files/dotfiles/ (only after secrets review)] ***
+skipping: [localhost]
+
+TASK [dotfiles : Git global identity] ******************************************
+changed: [localhost] => (item={'name': 'user.name', 'value': 'Maeverson Waitman (Maev)'})
+changed: [localhost] => (item={'name': 'user.email', 'value': 'maeverson.waitman@contabilizei.com.br'})
+
+TASK [dotfiles : Install zsh] **************************************************
+skipping: [localhost]
+
+TASK [dotfiles : Set default shell] ********************************************
+ok: [localhost]
+
+TASK [dotfiles : Oh-my-zsh] ****************************************************
+skipping: [localhost]
+
+TASK [dotfiles : Starship] *****************************************************
+skipping: [localhost]
+
+TASK [desktop : GNOME tooling] *************************************************
+ok: [localhost]
+
+TASK [desktop : Find user fonts in repo] ***************************************
+ok: [localhost]
+
+TASK [desktop : User fonts dir] ************************************************
+skipping: [localhost]
+
+TASK [desktop : User fonts] ****************************************************
+skipping: [localhost]
+
+TASK [desktop : Refresh font cache] ********************************************
+skipping: [localhost]
+
+TASK [desktop : Dconf settings] ************************************************
+ok: [localhost] => (item={'key': '/org/gnome/desktop/interface/color-scheme', 'value': "'prefer-dark'"})
+ok: [localhost] => (item={'key': '/org/gnome/desktop/interface/gtk-theme', 'value': "'Yaru-dark'"})
+ok: [localhost] => (item={'key': '/org/gnome/desktop/interface/icon-theme', 'value': "'Yaru'"})
+ok: [localhost] => (item={'key': '/org/gnome/desktop/input-sources/sources', 'value': "[('xkb', 'br')]"})
+changed: [localhost] => (item={'key': '/org/gnome/desktop/peripherals/keyboard/numlock-state', 'value': 'true'})
+changed: [localhost] => (item={'key': '/org/gnome/desktop/privacy/old-files-age', 'value': 'uint32 30'})
+changed: [localhost] => (item={'key': '/org/gnome/desktop/privacy/recent-files-max-age', 'value': '-1'})
+changed: [localhost] => (item={'key': '/org/gnome/desktop/session/idle-delay', 'value': 'uint32 0'})
+changed: [localhost] => (item={'key': '/org/gnome/desktop/sound/allow-volume-above-100-percent', 'value': 'true'})
+changed: [localhost] => (item={'key': '/org/gnome/nautilus/preferences/default-folder-viewer', 'value': "'list-view'"})
+changed: [localhost] => (item={'key': '/org/gnome/settings-daemon/plugins/color/night-light-enabled', 'value': 'false'})
+ok: [localhost] => (item={'key': '/org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-timeout', 'value': '3600'})
+ok: [localhost] => (item={'key': '/org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-type', 'value': "'nothing'"})
+changed: [localhost] => (item={'key': '/org/gnome/shell/extensions/dash-to-dock/dash-max-icon-size', 'value': '48'})
+ok: [localhost] => (item={'key': '/org/gnome/shell/extensions/dash-to-dock/dock-position', 'value': "'BOTTOM'"})
+ok: [localhost] => (item={'key': '/org/gnome/shell/extensions/dash-to-dock/extend-height', 'value': 'false'})
+changed: [localhost] => (item={'key': '/org/gnome/shell/extensions/ding/show-home', 'value': 'false'})
+ok: [localhost] => (item={'key': '/org/gnome/shell/extensions/tiling-assistant/active-window-hint-color', 'value': "'rgb(211,70,21)'"})
+changed: [localhost] => (item={'key': '/org/gnome/shell/extensions/tiling-assistant/tiling-popup-all-workspace', 'value': 'true'})
+changed: [localhost] => (item={'key': '/org/gnome/shell/favorite-apps', 'value': "['google-chrome.desktop', 'firefox_firefox.desktop', 'org.gnome.Nautilus.desktop', 'chrome-pommaclcbfghclhalboakcipcmmndhcj-Default.desktop', 'chrome-kjgfgldnnfoeklkmfkjfagphfepbbdan-Default.desktop', 'intellij-idea-ultimate_intellij-idea-ultimate.desktop', 'code.desktop', 'sublime-text_subl.desktop', 'dbeaver-ce_dbeaver-ce.desktop', 'com.gexperts.Tilix.desktop', 'chrome-dcfloamehjcblkjipmekkmpdcdonogob-Default.desktop', 'chrome-chhhnicmimaleleeifhckaabkcifmcjp-Default.desktop', 'keepassxc_keepassxc.desktop', 'bruno_bruno.desktop', 'forticlient-sslvpn.desktop', 'chrome-jndlecohfigjmhidboiabnpjfmjgmacp-Default.desktop', 'com.anthropic.Claude.desktop', 'chrome-hnpfjngllnobngcgfapefoaidbinmjnm-Default.desktop', 'teams-for-linux_teams-for-linux.desktop']"})
+
+TASK [desktop : GNOME extensions (manual list)] ********************************
+skipping: [localhost]
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=38   changed=18   unreachable=0    failed=0    skipped=28   rescued=0    ignored=0   
+

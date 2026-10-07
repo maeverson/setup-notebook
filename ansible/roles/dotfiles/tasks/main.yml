@@ -1,0 +1,50 @@
+---
+- name: Clone dotfiles repo  # noqa: latest[git] — clone único, update: false
+  ansible.builtin.git:
+    repo: "{{ dotfiles_repo }}"
+    dest: "{{ dotfiles_dest }}"
+    version: HEAD
+    update: false
+  when: dotfiles_repo | length > 0
+
+- name: Copy dotfiles from files/dotfiles/ (only after secrets review)
+  ansible.builtin.copy:
+    src: dotfiles/
+    dest: "{{ target_home }}/"
+    mode: preserve
+    backup: true
+  when: dotfiles_repo | length == 0 and dotfiles_copy_files
+
+- name: Git global identity
+  community.general.git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop:
+    - { name: user.name, value: "{{ git_user_name }}" }
+    - { name: user.email, value: "{{ git_user_email }}" }
+  when: git_user_email | length > 0
+
+- name: Install zsh
+  become: true
+  ansible.builtin.apt: { name: zsh, state: present }
+  when: default_shell is search("zsh")
+
+- name: Set default shell
+  become: true
+  ansible.builtin.user: { name: "{{ target_user }}", shell: "{{ default_shell }}" }
+
+- name: Oh-my-zsh
+  ansible.builtin.shell: set -o pipefail && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  args:
+    executable: /bin/bash
+    creates: "{{ target_home }}/.oh-my-zsh"
+  when: install_ohmyzsh
+
+- name: Starship
+  become: true
+  ansible.builtin.shell: set -o pipefail && curl -sS https://starship.rs/install.sh | sh -s -- -y
+  args:
+    executable: /bin/bash
+    creates: /usr/local/bin/starship
+  when: install_starship

@@ -1,0 +1,37 @@
+---
+- name: GNOME tooling
+  become: true
+  ansible.builtin.apt: { name: [gnome-shell-extension-manager, gnome-tweaks, dconf-cli], state: present }
+
+- name: Find user fonts in repo
+  ansible.builtin.set_fact:
+    desktop_user_fonts: "{{ query('ansible.builtin.fileglob', playbook_dir ~ '/' ~ user_fonts_dir ~ '/*.[ot]tf') }}"
+
+- name: User fonts dir
+  ansible.builtin.file: { path: "{{ target_home }}/.local/share/fonts", state: directory, mode: "0755" }
+  when: desktop_user_fonts | length > 0
+
+- name: User fonts
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ target_home }}/.local/share/fonts/"
+    mode: "0644"
+  loop: "{{ desktop_user_fonts }}"
+  register: desktop_fonts_copied
+
+- name: Refresh font cache
+  ansible.builtin.command: fc-cache -f
+  when: desktop_fonts_copied.changed | default(false)  # noqa: no-handler
+  changed_when: true
+
+- name: Dconf settings
+  community.general.dconf:
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+  loop: "{{ dconf_settings }}"
+
+- name: GNOME extensions (manual list)
+  ansible.builtin.debug:
+    msg: "Instalar via Extension Manager: {{ gnome_extensions }} — ver MANUAL.md"
+  when: gnome_extensions | length > 0

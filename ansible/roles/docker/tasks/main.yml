@@ -1,0 +1,42 @@
+---
+- name: Docker (official repo)
+  when: docker_source == "official"
+  block:
+    - name: Add Docker repo
+      become: true
+      ansible.builtin.deb822_repository:
+        name: docker
+        uris: https://download.docker.com/linux/ubuntu
+        suites: "{{ ubuntu_codename }}"
+        components: stable
+        signed_by: https://download.docker.com/linux/ubuntu/gpg
+        architectures: amd64
+      register: docker_repo_result
+    - name: Apt update
+      become: true
+      ansible.builtin.apt: { update_cache: true }
+      when: docker_repo_result.changed  # noqa: no-handler
+    - name: Install Docker CE
+      become: true
+      ansible.builtin.apt:
+        name: [docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin]
+        state: present
+
+- name: Docker (ubuntu repo)
+  become: true
+  ansible.builtin.apt: { name: [docker.io, docker-compose-v2, docker-buildx], state: present }
+  when: docker_source == "ubuntu"
+
+- name: Add user to docker group
+  become: true
+  ansible.builtin.user:
+    name: "{{ target_user }}"
+    groups: docker
+    append: true
+  # em --check num host sem docker o grupo/unit ainda não existem
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Enable docker service
+  become: true
+  ansible.builtin.systemd: { name: docker, enabled: true, state: started }
+  ignore_errors: "{{ ansible_check_mode }}"

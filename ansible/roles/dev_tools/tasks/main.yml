@@ -1,0 +1,115 @@
+---
+- name: Pipx packages
+  # community.general.pipx exige pipx >= 1.7; o noble traz 1.4.3
+  ansible.builtin.command: pipx install {{ item }}
+  args: { creates: "{{ target_home }}/.local/share/pipx/venvs/{{ item }}" }
+  loop: "{{ pipx_packages }}"
+
+- name: Uv
+  when: uv_install
+  block:
+    - name: Install uv (official installer -> ~/.local/bin)
+      ansible.builtin.shell: set -o pipefail && curl -LsSf https://astral.sh/uv/install.sh | sh
+      args:
+        executable: /bin/bash
+        creates: "{{ target_home }}/.local/bin/uv"
+    - name: Uv tools
+      ansible.builtin.command: "{{ target_home }}/.local/bin/uv tool install {{ item }}"
+      args: { creates: "{{ target_home }}/.local/share/uv/tools/{{ item }}" }
+      loop: "{{ uv_tools }}"
+      when: not ansible_check_mode
+
+- name: Claude Code (native installer -> ~/.local/bin/claude)
+  ansible.builtin.shell: set -o pipefail && curl -fsSL https://claude.ai/install.sh | bash
+  args:
+    executable: /bin/bash
+    creates: "{{ target_home }}/.local/bin/claude"
+  when: claude_code_install
+
+- name: Glab
+  when: glab_version | length > 0
+  block:
+    - name: Check installed glab version
+      ansible.builtin.command: "{{ target_home }}/.local/bin/glab --version"
+      register: dev_tools_glab
+      changed_when: false
+      failed_when: false
+      check_mode: false  # só leitura
+    - name: Install glab from GitLab release {{ glab_version }}
+      when: glab_version not in (dev_tools_glab.stdout | default(''))
+      block:
+        - name: Download glab tarball
+          ansible.builtin.get_url:
+            url: "https://gitlab.com/gitlab-org/cli/-/releases/v{{ glab_version }}/downloads/glab_{{ glab_version }}_linux_amd64.tar.gz"
+            dest: "/tmp/glab_{{ glab_version }}.tar.gz"
+            mode: "0644"
+        - name: Ensure ~/.local/bin
+          ansible.builtin.file: { path: "{{ target_home }}/.local/bin", state: directory, mode: "0775" }
+        - name: Extract glab binary
+          ansible.builtin.unarchive:
+            src: "/tmp/glab_{{ glab_version }}.tar.gz"
+            dest: "{{ target_home }}/.local/bin"
+            remote_src: true
+            include: [bin/glab]
+            extra_opts: [--strip-components=1]
+          when: not ansible_check_mode
+
+- name: Sdkman
+  when: sdkman_install
+  block:
+    - name: Install sdkman
+      ansible.builtin.shell: set -o pipefail && curl -s https://get.sdkman.io | bash
+      args:
+        executable: /bin/bash
+        creates: "{{ target_home }}/.sdkman/bin/sdkman-init.sh"
+    - name: Sdkman candidates
+      ansible.builtin.shell: |
+        source {{ target_home }}/.sdkman/bin/sdkman-init.sh
+        sdk install {{ item }} < /dev/null
+      args:
+        executable: /bin/bash
+        creates: "{{ target_home }}/.sdkman/candidates/{{ item.split(' ')[0] }}/{{ item.split(' ')[1] }}"
+      loop: "{{ sdkman_candidates }}"
+
+- name: Nvm
+  when: nvm_install
+  block:
+    - name: Install nvm {{ nvm_version }}
+      ansible.builtin.shell: set -o pipefail && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/{{ nvm_version }}/install.sh | bash
+      args:
+        executable: /bin/bash
+        creates: "{{ target_home }}/.nvm/nvm.sh"
+    - name: Node versions
+      ansible.builtin.shell: source {{ target_home }}/.nvm/nvm.sh && nvm install {{ item }}
+      args:
+        executable: /bin/bash
+        creates: "{{ target_home }}/.nvm/versions/node/v{{ item }}"
+      loop: "{{ nvm_node_versions }}"
+      when: not ansible_check_mode
+    - name: Npm global packages (default nvm node)
+      ansible.builtin.shell: |
+        source {{ target_home }}/.nvm/nvm.sh
+        if npm ls -g --depth=0 {{ item }} >/dev/null 2>&1; then echo present; else npm install -g {{ item }}; fi
+      args: { executable: /bin/bash }
+      loop: "{{ npm_global_packages }}"
+      register: dev_tools_npm_global
+      changed_when: "'present' not in dev_tools_npm_global.stdout"
+      when: not ansible_check_mode
+
+- name: Rustup
+  when: rustup_install
+  block:
+    - name: Install rustup
+      ansible.builtin.shell: set -o pipefail && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      args:
+        executable: /bin/bash
+        creates: "{{ target_home }}/.cargo/bin/cargo"
+    - name: Cargo packages
+      ansible.builtin.command: "{{ target_home }}/.cargo/bin/cargo install {{ item }}"
+      args: { creates: "{{ target_home }}/.cargo/bin/{{ item }}" }
+      loop: "{{ cargo_packages }}"
+
+- name: Go tools
+  ansible.builtin.command: go install {{ item }}
+  args: { creates: "{{ target_home }}/go/bin/{{ (item | regex_replace('@.*', '')).split('/')[-1] }}" }
+  loop: "{{ go_tools }}"

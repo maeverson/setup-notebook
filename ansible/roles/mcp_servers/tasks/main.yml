@@ -1,0 +1,45 @@
+---
+# Fase 5 — servidores MCP e plugins do Claude Code (escopo user).
+# Segredos nunca vêm daqui: servidores com OAuth pedem login no 1º uso (MANUAL.md).
+
+- name: Check claude CLI
+  ansible.builtin.stat: { path: "{{ target_home }}/.local/bin/claude" }
+  register: mcp_servers_claude_bin
+
+- name: Claude Code MCP servers
+  when: mcp_servers_claude_bin.stat.exists
+  block:
+    - name: Check existing MCP servers
+      ansible.builtin.command: "{{ target_home }}/.local/bin/claude mcp get {{ item.name }}"
+      loop: "{{ claude_mcp_servers }}"
+      loop_control: { label: "{{ item.name }}" }
+      register: mcp_servers_existing
+      changed_when: false
+      failed_when: false
+      check_mode: false  # só leitura
+
+    - name: Add MCP servers
+      ansible.builtin.command:
+        argv: >-
+          {{ [target_home ~ '/.local/bin/claude', 'mcp', 'add', '--scope', item.item.scope | default('user'),
+              '--transport', item.item.transport | default('http'), item.item.name, item.item.url] }}
+      loop: "{{ mcp_servers_existing.results }}"
+      loop_control: { label: "{{ item.item.name }}" }
+      when: item.rc != 0
+      changed_when: true
+
+- name: Claude Code plugins
+  when: mcp_servers_claude_bin.stat.exists
+  block:
+    - name: List installed plugins
+      ansible.builtin.command: "{{ target_home }}/.local/bin/claude plugin list"
+      register: mcp_servers_plugins
+      changed_when: false
+      failed_when: false
+      check_mode: false  # só leitura
+
+    - name: Install plugins
+      ansible.builtin.command: "{{ target_home }}/.local/bin/claude plugin install {{ item }}"
+      loop: "{{ claude_plugins }}"
+      when: item.split('@')[0] not in (mcp_servers_plugins.stdout | default(''))
+      changed_when: true

@@ -1,0 +1,22 @@
+---
+- name: Provisionar notebook corporativo (Ubuntu 24.04+)
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars_files:
+    - group_vars/all.yml
+  roles:
+    - { role: base, tags: [base] }
+    - { role: apt_repos, tags: [apt, repos] }
+    - { role: apt_packages, tags: [apt, packages] }
+    - { role: deb_manual, tags: [apt, deb] }
+    - { role: snap, tags: [snap] }
+    - { role: flatpak, tags: [flatpak] }
+    - { role: docker, tags: [docker], when: docker_enabled }
+    - { role: dev_tools, tags: [dev] }
+    - { role: vscode, tags: [vscode], when: vscode_enabled }
+    - { role: dotfiles, tags: [dotfiles] }
+    - { role: desktop, tags: [desktop] }
+    # Fase 5
+    - { role: ai_tools, tags: [ai, fase5] }
+    - { role: mcp_servers, tags: [mcp, fase5] }

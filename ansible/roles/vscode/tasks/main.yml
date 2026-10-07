@@ -1,0 +1,56 @@
+---
+- name: Check for package-managed VS Code repo
+  ansible.builtin.stat:
+    path: "/etc/apt/sources.list.d/vscode.{{ item }}"
+  loop: [list, sources]
+  register: vscode_repo_files
+
+- name: VS Code via Microsoft repo
+  when: vscode_install_method == "repo"
+  become: true
+  block:
+    - name: Add repo (skipped if the code package already manages one)
+      when: vscode_repo_files.results | selectattr('stat.exists') | list | length == 0
+      ansible.builtin.deb822_repository:
+        name: vscode
+        uris: https://packages.microsoft.com/repos/code
+        suites: stable
+        components: main
+        signed_by: https://packages.microsoft.com/keys/microsoft.asc
+        architectures: amd64
+      register: vscode_repo_result
+    - name: Apt update
+      ansible.builtin.apt: { update_cache: true }
+      when: vscode_repo_result.changed | default(false)  # noqa: no-handler
+    - name: Install code
+      ansible.builtin.apt: { name: code, state: present }
+
+- name: VS Code via snap
+  become: true
+  community.general.snap: { name: code, classic: true }
+  when: vscode_install_method == "snap"
+
+- name: Installed extensions
+  ansible.builtin.command: code --list-extensions
+  register: vscode_installed_list
+  changed_when: false
+  failed_when: false
+
+- name: Install extensions
+  ansible.builtin.command: code --install-extension {{ item }}
+  loop: "{{ vscode_extensions }}"
+  when: item | lower not in (vscode_installed_list.stdout | default('') | lower)
+  changed_when: true
+
+- name: Ensure VS Code user dir
+  ansible.builtin.file: { path: "{{ target_home }}/.config/Code/User", state: directory, mode: "0775" }
+  when: vscode_copy_settings
+
+- name: Copy settings (backup of existing file is kept)
+  ansible.builtin.copy:
+    src: "vscode/{{ item }}"
+    dest: "{{ target_home }}/.config/Code/User/{{ item }}"
+    mode: "0644"
+    backup: true
+  loop: [settings.json, keybindings.json]
+  when: vscode_copy_settings

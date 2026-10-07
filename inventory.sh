@@ -2,12 +2,15 @@
 # Inventário somente-leitura do notebook atual. NÃO usa sudo. NÃO lê segredos.
 # Uso: bash scripts/inventory.sh [dir_saida]   (default: inventory/)
 set -uo pipefail
+export LC_ALL=C   # saída de apt-cache/snap etc. em inglês: os parsers dependem disso
 OUT="${1:-inventory}"; mkdir -p "$OUT"; ERR="$OUT/_errors.log"; : > "$ERR"
 run() { # run <arquivo> <comando...>
   local f="$OUT/$1"; shift
   if "$@" > "$f" 2>>"$ERR"; then echo "[ok ] $f"; else echo "[err] $f (ver $ERR)"; fi
 }
 have() { command -v "$1" >/dev/null 2>&1; }
+# Se a ferramenta não existe, zera o arquivo para não sobrar dado de uma coleta anterior.
+skip() { : > "$OUT/$1"; echo "[---] $OUT/$1 (ferramenta ausente)"; }
 
 echo "== Sistema =="
 run os.txt sh -c 'lsb_release -a 2>/dev/null; echo; uname -a; echo; hostnamectl 2>/dev/null; echo; echo "SHELL=$SHELL"; echo "DESKTOP=$XDG_CURRENT_DESKTOP SESSION=$XDG_SESSION_TYPE"'
@@ -31,10 +34,10 @@ run apt-preferences.txt sh -c 'cat /etc/apt/preferences /etc/apt/preferences.d/*
 run apt-history-installs.txt sh -c 'zgrep -h "Commandline:" /var/log/apt/history.log* 2>/dev/null | sort -u'
 
 echo "== Snap / Flatpak / AppImage / opt =="
-have snap && run snap.txt snap list
-have snap && run snap-classic.txt sh -c 'snap list | awk "NR>1 && /classic/{print \$1}"'
-have flatpak && run flatpak.txt flatpak list --app --columns=application,origin,version,installation
-have flatpak && run flatpak-remotes.txt flatpak remotes --columns=name,url
+if have snap; then run snap.txt snap list; else skip snap.txt; fi
+if have snap; then run snap-classic.txt sh -c 'snap list | awk "NR>1 && /classic/{print \$1}"'; else skip snap-classic.txt; fi
+if have flatpak; then run flatpak.txt flatpak list --app --columns=application,origin,version,installation; else skip flatpak.txt; fi
+if have flatpak; then run flatpak-remotes.txt flatpak remotes --columns=name,url; else skip flatpak-remotes.txt; fi
 run appimage.txt sh -c 'find ~/Applications ~/apps ~/.local/bin ~/Downloads /opt -maxdepth 2 -iname "*.AppImage" 2>/dev/null'
 run opt.txt sh -c 'ls -la /opt 2>/dev/null'
 run local-bin.txt sh -c 'echo "## /usr/local/bin"; ls -la /usr/local/bin 2>/dev/null; echo; echo "## ~/.local/bin"; ls -la ~/.local/bin 2>/dev/null'
@@ -54,17 +57,17 @@ command -v asdf >/dev/null && { echo "## asdf"; asdf list 2>/dev/null; }
 command -v mise >/dev/null && { echo "## mise"; mise ls 2>/dev/null; }
 command -v rustup >/dev/null && { echo "## rustup"; rustup show 2>/dev/null; }
 true'
-have pipx && run pipx.txt pipx list --short
-have pip3 && run pip-user.txt pip3 list --user --format=freeze
-have npm && run npm-global.txt npm ls -g --depth=0
-have cargo && run cargo-bin.txt sh -c 'ls ~/.cargo/bin 2>/dev/null'
+if have pipx; then run pipx.txt pipx list --short; else skip pipx.txt; fi
+if have pip3; then run pip-user.txt pip3 list --user --format=freeze; else skip pip-user.txt; fi
+if have npm; then run npm-global.txt npm ls -g --depth=0; else skip npm-global.txt; fi
+if have cargo; then run cargo-bin.txt sh -c 'ls ~/.cargo/bin 2>/dev/null'; else skip cargo-bin.txt; fi
 run go-bin.txt sh -c 'ls ~/go/bin 2>/dev/null; true'
-have gem && run gem.txt gem list --local
-have code && run vscode-extensions.txt code --list-extensions --show-versions
+if have gem; then run gem.txt gem list --local; else skip gem.txt; fi
+if have code; then run vscode-extensions.txt code --list-extensions --show-versions; else skip vscode-extensions.txt; fi
 run vscode-settings.json sh -c 'cat ~/.config/Code/User/settings.json 2>/dev/null; true'
 run vscode-keybindings.json sh -c 'cat ~/.config/Code/User/keybindings.json 2>/dev/null; true'
 run jetbrains.txt sh -c 'ls ~/.local/share/JetBrains/Toolbox/apps 2>/dev/null; true'
-have docker && run docker.txt sh -c 'docker version 2>/dev/null; echo; docker compose version 2>/dev/null; echo; docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null; echo; docker context ls 2>/dev/null; true'
+if have docker; then run docker.txt sh -c 'docker version 2>/dev/null; echo; docker compose version 2>/dev/null; echo; docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null; echo; docker context ls 2>/dev/null; true'; else skip docker.txt; fi
 run git-config.txt sh -c 'git config --global --list 2>/dev/null | grep -viE "token|password|credential\.helper=.*store"; true'
 
 echo "== Serviços / cron =="
@@ -73,8 +76,8 @@ run systemd-user-enabled.txt systemctl --user list-unit-files --state=enabled --
 run cron.txt sh -c 'crontab -l 2>/dev/null; ls /etc/cron.d 2>/dev/null; true'
 
 echo "== Desktop =="
-have dconf && run dconf-dump.ini dconf dump /
-have gnome-extensions && run gnome-extensions.txt gnome-extensions list --enabled
+if have dconf; then run dconf-dump.ini dconf dump /; else skip dconf-dump.ini; fi
+if have gnome-extensions; then run gnome-extensions.txt gnome-extensions list --enabled; else skip gnome-extensions.txt; fi
 run gnome-extensions-dirs.txt sh -c 'ls ~/.local/share/gnome-shell/extensions 2>/dev/null; true'
 run fonts-user.txt sh -c 'ls -R ~/.fonts ~/.local/share/fonts 2>/dev/null; true'
 run themes.txt sh -c 'ls ~/.themes ~/.icons ~/.local/share/themes ~/.local/share/icons 2>/dev/null; true'
@@ -89,10 +92,10 @@ run dotfiles-list.txt sh -c 'ls -A ~ | grep "^\." | grep -vE "^\.(ssh|gnupg|netr
 run shell-rc-sources.txt sh -c 'grep -hE "^(source|\.|export PATH|eval)" ~/.bashrc ~/.zshrc ~/.profile ~/.bash_profile ~/.zprofile 2>/dev/null | grep -viE "token|secret|key|password"; true'
 
 echo "== Rede / certs / impressoras (somente nomes) =="
-have nmcli && run network-connections.txt nmcli -t -f NAME,TYPE,DEVICE connection show
+if have nmcli; then run network-connections.txt nmcli -t -f NAME,TYPE,DEVICE connection show; else skip network-connections.txt; fi
 run ca-certs-local.txt sh -c 'ls /usr/local/share/ca-certificates 2>/dev/null; true'
 run vpn-clients.txt sh -c 'for c in openvpn openconnect wg forticlient globalprotect nordvpn tailscale zerotier-cli; do command -v $c >/dev/null && echo $c; done; true'
-have lpstat && run printers.txt lpstat -p -d
+if have lpstat; then run printers.txt lpstat -p -d; else skip printers.txt; fi
 run hosts-extra.txt sh -c 'grep -vE "^(#|\s*$|127\.|::1|ff0|fe00)" /etc/hosts 2>/dev/null; true'
 
 echo "== Navegadores / comunicação =="

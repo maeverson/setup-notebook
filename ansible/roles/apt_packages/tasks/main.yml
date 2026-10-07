@@ -1,0 +1,14 @@
+---
+- name: Install apt packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ apt_packages }}"
+    state: present
+  when: apt_packages | length > 0
+
+- name: Install AD join packages (join itself is manual, see MANUAL.md)
+  become: true
+  ansible.builtin.apt:
+    name: "{{ ad_join_packages }}"
+    state: present
+  when: ad_join_enabled

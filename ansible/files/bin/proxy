@@ -1,0 +1,369 @@
+#!/usr/bin/env bash
+#
+# Interactive launcher for the Cloud SQL Proxy.
+#
+#   ↑/↓ (or k/j)  move between instances
+#   Enter         connect the highlighted instance, or disconnect it when it is
+#                 already connected — several may stay connected at once
+#   l             show the last log lines of the highlighted instance
+#   d             disconnect everything
+#   q             quit, stopping every proxy this script started
+#
+# The proxy binary is expected right next to this script, but can be overridden
+# with the CLOUD_SQL_PROXY environment variable.
+
+# Everything below runs inside this block, and the block ends with an explicit
+# `exit`: that forces bash to parse the whole file before running a single line.
+# Without it bash keeps re-reading the script by byte offset while it runs, so
+# editing the file mid-session makes the running instance execute whatever
+# happens to sit at that offset in the new file (which once re-ran the array
+# initialisation and made the launcher forget its own proxies).
+{
+
+# The UI needs bash (arrays, `read -sn1`); re-exec if started by another shell.
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROXY="${CLOUD_SQL_PROXY:-$SCRIPT_DIR/cloud-sql-proxy}"
+
+# name|port|instance
+ENTRIES=(
+    "cupom-prod|5433|contabilizei-pagamentos:southamerica-east1:contabilizei-pagamentos-cupom"
+    "cupom-dev|5434|contabilizei-pagamentos-teste:southamerica-east1:contabilizei-pagamentos-teste-cupom"
+    "gestao-pagamentos-dev|5435|contabilizei-pagamentos-teste:us-central1:ms-contabilizei-gestao-pagamentos"
+    "gestao-pagamentos-prod|5445|contabilizei-pagamentos:us-central1:ms-contabilizei-gestao-pagamentos"
+    "hubspot-api-dev|5436|contabilizei-canais-xp-dev:us-central1:contabilizei-canais-xp-dev"
+    "nucleo-cobranca-dev|5437|jornada-recebimento-dev:us-central1:nucleo-cobranca-dev"
+    "nucleo-cobranca-prod|5441|jornada-recebimento-prd:us-central1:nucleo-cobranca-prd"
+    "ms-gateway-adyen-dev|5438|contabilizei-pagamentos-teste:us-central1:ms-gateway-adyen-db"
+    "ms-gateway-adyen-prod|5439|contabilizei-pagamentos:us-central1:ms-gateway-adyen-db"
+    "nucleo-produto-dev|5446|jornada-recebimento-dev:us-central1:nucleo-produto-dev"
+    "nucleo-produto-prod|5447|jornada-recebimento-prd:us-central1:nucleo-produto-prd"
+    "nucleo-fatura-dev|5448|jornada-recebimento-dev:us-central1:nucleo-fatura-dev"
+    "nucleo-fatura-prod|5450|jornada-recebimento-prd:us-central1:nucleo-fatura-prd"
+    "nucleo-assinatura-dev|5449|jornada-recebimento-dev:us-central1:nucleo-assinatura-dev"
+    "nucleo-assinatura-prod|5451|jornada-recebimento-prd:us-central1:nucleo-assinatura-prd"
+)
+
+NAMES=() PORTS=() INSTANCES=() PIDS=() LOGS=() STATE=() NOTES=() ADOPTED=()
+for entry in "${ENTRIES[@]}"; do
+    IFS='|' read -r _name _port _instance <<<"$entry"
+    NAMES+=("$_name")
+    PORTS+=("$_port")
+    INSTANCES+=("$_instance")
+    PIDS+=("")      # empty while the proxy is not running
+    LOGS+=("")
+    STATE+=("off")  # off | starting | up | error
+    NOTES+=("")     # short explanation shown under a failed entry
+    ADOPTED+=("")   # set when the proxy was started outside this session
+done
+COUNT=${#NAMES[@]}
+cursor=0
+message=""
+
+LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/cloud-sql-proxy.XXXXXX")"
+
+if [ -t 1 ]; then
+    BOLD=$'\e[1m'; DIM=$'\e[2m'; REV=$'\e[7m'; RESET=$'\e[0m'
+    GREEN=$'\e[32m'; RED=$'\e[31m'; YELLOW=$'\e[33m'; CYAN=$'\e[36m'
+else
+    BOLD= DIM= REV= RESET= GREEN= RED= YELLOW= CYAN=
+fi
+
+STTY_SAVE="$(stty -g 2>/dev/null)"
+
+# ---------------------------------------------------------------- process mgmt
+
+# A background child stays as a zombie until it is waited on, and `kill -0`
+# still succeeds for zombies — so probe the process state, not just the pid.
+is_alive() {
+    local pid="$1" state
+    kill -0 "$pid" 2>/dev/null || return 1
+    if [ -r "/proc/$pid/stat" ]; then
+        state="$(awk '{print $3}' "/proc/$pid/stat" 2>/dev/null)"
+        [ "$state" = "Z" ] && return 1
+    fi
+    return 0
+}
+
+last_log_line() {
+    [ -s "$1" ] || return 0
+    tail -n 20 "$1" | grep -v '^[[:space:]]*$' | tail -n 1 | cut -c1-88
+}
+
+# Proxies from an earlier session (or a crashed one) keep holding their port,
+# which made a fresh launcher fail with "address already in use" on connect.
+# Pick them up instead, so they show as connected and Enter can stop them.
+# pid of a proxy already serving this port/instance, started by whoever.
+# The process list is captured first so awk cannot match its own command line.
+find_running() {
+    local snapshot
+    snapshot="$(ps -eo pid=,args= 2>/dev/null)"
+    printf '%s\n' "$snapshot" |
+        PROXY_PAT="--port $1 $2" awk 'index($0, ENVIRON["PROXY_PAT"]) { print $1; exit }'
+}
+
+adopt_entry() {
+    local i="$1"
+    local pid="$2"
+    PIDS[$i]="$pid"
+    LOGS[$i]=""
+    STATE[$i]="up"
+    NOTES[$i]=""
+    ADOPTED[$i]=1
+}
+
+adopt_running() {
+    local i pid n=0
+    for ((i = 0; i < COUNT; i++)); do
+        [ -n "${PIDS[$i]}" ] && continue
+        pid="$(find_running "${PORTS[$i]}" "${INSTANCES[$i]}")"
+        [ -n "$pid" ] || continue
+        adopt_entry "$i" "$pid"
+        n=$((n + 1))
+    done
+    [ "$n" -gt 0 ] &&
+        message="${YELLOW}Adopted $n proxy(ies) already running — Enter stops them.${RESET}"
+    return 0
+}
+
+connected_count() {
+    local i n=0
+    for ((i = 0; i < COUNT; i++)); do
+        [ -n "${PIDS[$i]}" ] && n=$((n + 1))
+    done
+    printf '%s' "$n"
+}
+
+start_proxy() {
+    local i="$1"
+    local log running
+    if [ ! -x "$PROXY" ]; then
+        message="${RED}Proxy binary not found or not executable: $PROXY${RESET}"
+        return 1
+    fi
+
+    running="$(find_running "${PORTS[$i]}" "${INSTANCES[$i]}")"
+    if [ -n "$running" ]; then
+        adopt_entry "$i" "$running"
+        message="${YELLOW}${NAMES[$i]} was already running (pid $running) — adopted it.${RESET}"
+        return 0
+    fi
+
+    log="$LOG_DIR/${NAMES[$i]}.log"
+    : >"$log"
+    "$PROXY" --port "${PORTS[$i]}" "${INSTANCES[$i]}" >"$log" 2>&1 &
+    PIDS[$i]=$!
+    LOGS[$i]="$log"
+    STATE[$i]="starting"
+    NOTES[$i]=""
+    ADOPTED[$i]=""
+    message="${CYAN}Starting ${NAMES[$i]} on port ${PORTS[$i]}...${RESET}"
+}
+
+stop_proxy() {
+    # Declared one per line on purpose: bash expands every word of a `local`
+    # statement before any of its assignments take effect, so a single
+    # `local i="$1" pid="${PIDS[$i]}"` would read PIDS with the *caller's* i.
+    local i="$1"
+    local pid="${PIDS[$i]}"
+    local waited=0
+    if [ -n "$pid" ]; then
+        kill "$pid" 2>/dev/null
+        while is_alive "$pid" && [ "$waited" -lt 30 ]; do
+            sleep 0.1
+            waited=$((waited + 1))
+        done
+        is_alive "$pid" && kill -9 "$pid" 2>/dev/null
+        [ -z "${ADOPTED[$i]}" ] && wait "$pid" 2>/dev/null
+    fi
+    PIDS[$i]=""
+    STATE[$i]="off"
+    NOTES[$i]=""
+    ADOPTED[$i]=""
+}
+
+stop_all() {
+    local i
+    for ((i = 0; i < COUNT; i++)); do
+        [ -n "${PIDS[$i]}" ] && stop_proxy "$i"
+    done
+}
+
+# Promote "starting" to "up" once the proxy reports it is listening, and notice
+# proxies that died on their own (bad credentials, port already taken, ...).
+refresh_status() {
+    local i pid
+    jobs >/dev/null 2>&1   # let bash reap finished background jobs
+    for ((i = 0; i < COUNT; i++)); do
+        pid="${PIDS[$i]}"
+        [ -n "$pid" ] || continue
+        if is_alive "$pid"; then
+            if [ "${STATE[$i]}" = "starting" ] &&
+               grep -qi 'ready for new connections' "${LOGS[$i]}" 2>/dev/null; then
+                STATE[$i]="up"
+                message="${GREEN}${NAMES[$i]} connected on port ${PORTS[$i]}.${RESET}"
+            fi
+        else
+            [ -z "${ADOPTED[$i]}" ] && wait "$pid" 2>/dev/null
+            PIDS[$i]=""
+            STATE[$i]="error"
+            NOTES[$i]="$(last_log_line "${LOGS[$i]}")"
+            message="${RED}${NAMES[$i]} stopped — press l to see the log.${RESET}"
+        fi
+    done
+}
+
+any_starting() {
+    local i
+    for ((i = 0; i < COUNT; i++)); do
+        [ "${STATE[$i]}" = "starting" ] && return 0
+    done
+    return 1
+}
+
+# ---------------------------------------------------------------------- render
+# Redraws in place (home + erase-to-end-of-line per row) instead of clearing the
+# whole screen, so the list does not flicker on every keystroke.
+
+draw() {
+    local i marker color label line
+    printf '\e[H'
+    printf '%sCloud SQL Proxy%s  %s(%s connected)%s\e[K\n' \
+        "$BOLD" "$RESET" "$DIM" "$(connected_count)" "$RESET"
+    printf '%s↑/↓ move · Enter connect/disconnect · l logs · r rescan · d all off · q quit%s\e[K\n\e[K\n' \
+        "$DIM" "$RESET"
+
+    for ((i = 0; i < COUNT; i++)); do
+        case "${STATE[$i]}" in
+            up)       marker="●"; color="$GREEN";  label="connected" ;;
+            starting) marker="◐"; color="$YELLOW"; label="starting..." ;;
+            error)    marker="✖"; color="$RED";    label="stopped" ;;
+            *)        marker="○"; color="$DIM";    label="" ;;
+        esac
+
+        line="$(printf ' %s  %-24s :%-5s  %-12s' \
+            "$marker" "${NAMES[$i]}" "${PORTS[$i]}" "$label")"
+
+        if [ "$i" -eq "$cursor" ]; then
+            printf '%s%s%s%s\e[K\n' "$REV" "$color" "$line" "$RESET"
+        else
+            printf '%s%s%s\e[K\n' "$color" "$line" "$RESET"
+        fi
+
+        if [ "${STATE[$i]}" = "error" ] && [ -n "${NOTES[$i]}" ]; then
+            printf '    %s%s%s\e[K\n' "$DIM" "${NOTES[$i]}" "$RESET"
+        fi
+    done
+
+    printf '\e[K\n%s\e[K\n\e[J' "$message"
+}
+
+show_log() {
+    local i="$1"
+    printf '\e[H\e[2J'
+    printf '%s%s%s  (port %s)\n\n' "$BOLD" "${NAMES[$i]}" "$RESET" "${PORTS[$i]}"
+    if [ -n "${LOGS[$i]}" ] && [ -s "${LOGS[$i]}" ]; then
+        tail -n 30 "${LOGS[$i]}"
+    else
+        echo "No log yet — this proxy has not been started in this session."
+    fi
+    printf '\n%sPress any key to go back...%s' "$DIM" "$RESET"
+    read -rsn1 _
+    printf '\e[H\e[2J'
+}
+
+# --------------------------------------------------------------------- key i/o
+# Stores a symbolic key name in KEY. Returns 1 on EOF, 2 when the read timed out
+# (only used while a proxy is starting, to refresh its status).
+# It deliberately does not run inside `$( )`: a blocking `read` in a subshell
+# would postpone the INT/TERM/HUP traps until the next keystroke.
+read_key() {
+    local key rest rc timeout=()
+    KEY=""
+    any_starting && timeout=(-t 1)
+
+    IFS= read -rsn1 "${timeout[@]}" key
+    rc=$?
+    [ "$rc" -gt 128 ] && return 2
+    [ "$rc" -ne 0 ] && return 1
+
+    if [ "$key" = $'\e' ]; then
+        IFS= read -rsn2 -t 0.05 rest
+        case "$rest" in
+            '[A') KEY='up' ;;
+            '[B') KEY='down' ;;
+            '[H') KEY='home' ;;
+            '[F') KEY='end' ;;
+            *)    KEY='other' ;;
+        esac
+        return 0
+    fi
+
+    case "$key" in
+        ''|$'\r'|$'\n') KEY='enter' ;;
+        k|K) KEY='up' ;;
+        j|J) KEY='down' ;;
+        g)   KEY='home' ;;
+        G)   KEY='end' ;;
+        l|L) KEY='log' ;;
+        r|R) KEY='rescan' ;;
+        d|D) KEY='stopall' ;;
+        q|Q) KEY='quit' ;;
+        *)   KEY='other' ;;
+    esac
+    return 0
+}
+
+# ----------------------------------------------------------------------- setup
+
+cleanup() {
+    stop_all
+    printf '\e[?25h\e[?1049l'          # cursor back, leave the alternate screen
+    [ -n "$STTY_SAVE" ] && stty "$STTY_SAVE" 2>/dev/null
+    rm -rf "$LOG_DIR"
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM HUP
+
+printf '\e[?1049h\e[?25l\e[H\e[2J'     # alternate screen, hidden cursor
+
+adopt_running
+
+while true; do
+    refresh_status
+    draw
+
+    read_key
+    rc=$?
+    [ "$rc" -eq 2 ] && continue        # timeout: refresh and redraw
+    [ "$rc" -ne 0 ] && break           # stdin closed
+
+    message=""
+    case "$KEY" in
+        up)      cursor=$(((cursor - 1 + COUNT) % COUNT)) ;;
+        down)    cursor=$(((cursor + 1) % COUNT)) ;;
+        home)    cursor=0 ;;
+        end)     cursor=$((COUNT - 1)) ;;
+        enter)
+            if [ -n "${PIDS[$cursor]}" ]; then
+                stop_proxy "$cursor"
+                message="${YELLOW}Disconnected ${NAMES[$cursor]}.${RESET}"
+            else
+                start_proxy "$cursor"
+            fi
+            ;;
+        log)     show_log "$cursor" ;;
+        rescan)  adopt_running ;;
+        stopall)
+            stop_all
+            message="${YELLOW}All proxies disconnected.${RESET}"
+            ;;
+        quit)    break ;;
+    esac
+done
+
+exit 0
+}
